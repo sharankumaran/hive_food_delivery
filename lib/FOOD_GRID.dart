@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:hive_food_delivery/model/food_item_model.dart';
 import 'package:hive_food_delivery/provider/cart_provider.dart';
 import 'package:hive_food_delivery/provider/favourite_provider.dart';
+import 'package:hive_food_delivery/screens/food_detail_screen.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 
@@ -20,14 +21,12 @@ class _FoodGridCardState extends State<FoodGridCard>
     with SingleTickerProviderStateMixin {
   bool showLottie = false;
 
-  // Animation logic
   void playAddAnimation() async {
     setState(() => showLottie = true);
     await Future.delayed(const Duration(milliseconds: 1200));
     if (mounted) setState(() => showLottie = false);
   }
 
-  // Toast logic
   void showProToast({
     required String message,
     required IconData icon,
@@ -88,11 +87,9 @@ class _FoodGridCardState extends State<FoodGridCard>
 
   @override
   Widget build(BuildContext context) {
-    // We call the builder function here
     return _buildMenuGridCard(widget.item);
   }
 
-  // Moved INSIDE the State class so it can access variables and context
   Widget _buildMenuGridCard(FoodItemModel item) {
     const Color deepSlate = Color(0xFF1E293B);
     const Color mediumSlate = Color(0xFF475569);
@@ -114,154 +111,156 @@ class _FoodGridCardState extends State<FoodGridCard>
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. IMAGE SECTION
-          Expanded(
-            flex: 5,
-            child: Stack(
-              children: [
-                Container(
-                  margin: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: const Color(0xFFF8F9FA),
-                  ),
-                ),
-                Center(
-                  child: Hero(
-                    tag: 'menu-item-${item.id}',
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Image.asset(item.image, fit: BoxFit.contain),
-                    ),
-                  ),
-                ),
-
-                // ❤️ Favourite Button
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticFeedback.mediumImpact();
-                      fav.toggleFavourite(item);
-                      showProToast(
-                        icon: isFav ? Icons.favorite_border : Icons.favorite,
-                        iconColor: isFav ? Colors.white : Colors.redAccent,
-                        message: isFav
-                            ? "Removed from Wishlist"
-                            : "Saved to Wishlist",
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        isFav ? Icons.favorite : Icons.favorite_border,
-                        color: isFav ? Colors.red : Colors.grey,
-                        size: 16,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // ✨ Lottie Animation
-                if (showLottie)
-                  Positioned.fill(
-                    child: Center(
-                      child: Lottie.asset(
-                        "assets/lottie/Shopping Cart Loader.json",
-                        width: 80,
-                        repeat: false,
-                      ),
-                    ),
-                  ),
-              ],
+      // 1. WRAP WITH GESTURE DETECTOR FOR NAVIGATION
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FoodDetailsScreen(item: item),
             ),
-          ),
-
-          // 2. INFO SECTION
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  item.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                    color: deepSlate,
+          );
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 5,
+              child: Stack(
+                children: [
+                  Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: const Color(0xFFF8F9FA),
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  "Chef's Special",
-                  style: TextStyle(
-                    color: mediumSlate.withOpacity(0.6),
-                    fontSize: 10,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        "BD ${item.price.toStringAsFixed(3)}",
-                        style: const TextStyle(
-                          color: Colors.deepOrange,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 14,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+                  Center(
+                    child: Hero(
+                      tag: 'menu-item-${item.id}',
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Image.asset(item.image, fit: BoxFit.contain),
                       ),
                     ),
-
-                    // ➕ Add to Cart Button
-                    GestureDetector(
+                  ),
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: GestureDetector(
                       onTap: () {
-                        HapticFeedback.selectionClick();
-                        cart.addItem(
-                          item.id,
-                          item.name,
-                          item.price,
-                          item.image,
-                        );
-                        playAddAnimation();
+                        HapticFeedback.mediumImpact();
+                        fav.toggleFavourite(item);
                         showProToast(
-                          message: "Added to bag",
-                          icon: Icons.check_circle_rounded,
-                          iconColor: const Color(0xFF00A651),
+                          icon: isFav ? Icons.favorite_border : Icons.favorite,
+                          iconColor: isFav ? Colors.white : Colors.redAccent,
+                          message: isFav
+                              ? "Removed from Wishlist"
+                              : "Saved to Wishlist",
                         );
                       },
                       child: Container(
                         padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: deepSlate,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.add,
+                        decoration: const BoxDecoration(
                           color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isFav ? Icons.favorite : Icons.favorite_border,
+                          color: isFav ? Colors.red : Colors.grey,
                           size: 16,
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  if (showLottie)
+                    Positioned.fill(
+                      child: Center(
+                        child: Lottie.asset(
+                          "assets/lottie/Shopping Cart Loader.json",
+                          width: 80,
+                          repeat: false,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    item.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                      color: deepSlate,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    "Chef's Special",
+                    style: TextStyle(
+                      color: mediumSlate.withOpacity(0.6),
+                      fontSize: 10,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          "BD ${item.price.toStringAsFixed(3)}",
+                          style: const TextStyle(
+                            color: Colors.deepOrange,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          cart.addItem(
+                            item.id,
+                            item.name,
+                            item.price,
+                            item.image,
+                          );
+                          playAddAnimation();
+                          showProToast(
+                            message: "Added to bag",
+                            icon: Icons.check_circle_rounded,
+                            iconColor: const Color(0xFF00A651),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: deepSlate,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.add,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
